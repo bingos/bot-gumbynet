@@ -1,0 +1,116 @@
+GumbyNET:
+========
+
+GumbyNET is an experimental POE::Component::IRC framework for testing PCI plugins.
+
+The GumbyNET bot provides a controlling session which deals with starting an EasyDBI
+session, getting the stored configuration from database and then starting the initial
+connection to the IRC network. Everything else is then dealt with by the PCI plugins.
+
+Requirements:
+============
+
+perl :)
+POE
+POE::Component::IRC 4.4
+Date::Format
+POE::Component::EasyDBI
+LWP
+CGI
+XML::RSS
+Time::HiRes;
+POE::Component::RSSAggregator ( for aggrebot.pl )
+MySQL database, for storage.
+
+Installation:
+============
+
+The bot requires a database for storage. Tested with MySQL 3.23.55, but it
+hopefully uses fairly standard SQL and PoCo-EasyDBI, so should work with 
+other database backends. Your milage will vary :)
+
+A database dump file is provided, 'database.sql'
+
+Create a database and a user with full rights to that database.
+
+Import the table structures.
+
+$ mysql -u <whoever> -p <database> < ./database.sql
+
+Connect to the database, and create an entry in BotConfig table for your bot.
+
+$ mysql -u <whoever> -p <database>
+
+mysql> insert into BotConfig (NickName,IRCName,IRCServer,IRCPort,IRCUser) values 
+	('LameBOT','LameBOT[tm]','irc.server.org',6667,'lamebot');
+
+mysql> insert into BotChannels values ( 'LameBOT', '#Channel' );
+
+The bot requires a configuration file, create a file called GumbyNET.cfg, values
+in this file are specified as 'entry = whatever'
+DSN = <dsnpath>
+USER = the user to connect to the dsn as
+PASS = the password to use to connect to the dsn
+OWNER = the full identity of the IRC user who will own this pesky bot. Wildcards '*' are supported.
+	eq. Jimmy!*@*.somenetwork.com
+BOUNCER = the bindport for the Bouncer plugin
+CONSOLE = the bindport for the console plugin
+
+Start the bot:
+
+./GumbyNET.pl --nick=<nickname>
+
+Plugin Usage:
+============
+
+All plugins are loaded via the PlugMan plugin. The specified bot owner can issue the following 
+commands in any channel ( by addressing the bot ) or via privmsg to the bot.
+
+plugin_add <alias> <module> <spaceseparatedlistofparameters>
+ - loads the plugin
+plugin_del <alias> - deletes the plugin
+plugin_reload <alias> - reloads the plugin
+plugin_list - List all loaded plugins including unmanaged plugins
+plugin_loaded - Only list managed plugins
+
+Bouncer - Provides IRC bouncer type functionality. Listens on the specified bindport and
+	  emulates an IRC server. When IRC clients connect, the plugin registers them and
+	  automatically issues JOIN messages for all the currently active channels. Caveat:
+	  all IRC clients must register with the same nickname as the hosting IRC bot.
+
+	  Has one public command 'bnc' which lists the currently connected sessions.
+	  eq. LameBOT: bnc
+
+Console - This plugin provides a console ( duh! ) to the bot session. Behold the glory of
+	  debug information! Issue commands! Caveat: commands must follow the syntax of PoCo-IRC
+	  events, ie. 'CTCP #Channel ACTION slaps an operator' Typing QUIT is not a good idea,
+	  unless you really mean it.
+
+Connector - This plugin deals with gluing the bot to the specified IRC network. Once the bot
+	  has been initially joined to the IRC network, this handles all disconnects and makes
+	  sure that bot stays on that network.
+
+Public - Provides a number of commands for people to pester the bot with. The bot must be 
+	 directly addressed by name for them to work:
+
+	 version - displays the current version of the running bot.
+	 uptime  - some connection information
+	 stats   - some vague information
+	 time    - the current time where the bot is installed
+	 clock   - see what time it is around the world ( uses an RSS source ).
+	 slashdot - Get the latest Slashdot headlines.
+
+Trust - Manages mask based +o, +h and +v of people. Uses Bender's trust system.
+
+DNS - Query dns records.
+
+CTCP - Deals with CTCP requests such as VERSION, etc.
+
+Copyright:
+=========
+
+(c)2005 Kidney BinGOs aka Chris Williams
+
+This program may be used, modified, and distributed under the same
+terms as Perl itself. Please see the license that came with your Perl
+distribution for details.
