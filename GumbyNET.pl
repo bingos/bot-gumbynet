@@ -165,7 +165,7 @@ sub irc_001 {
     my ( $kernel, $heap ) = @_[ KERNEL, HEAP ];
 
     if ( $heap->{Umode} ) {
-	$irc->yield( mode => $irc->nick_name() => ( $heap->{Umode} =~ /^(+|-)/ ? $heap->{Umode} : '+' . $heap->{Umode} ) );
+	$irc->yield( mode => $irc->nick_name() => ( $heap->{Umode} =~ /^(\+|-)/ ? $heap->{Umode} : '+' . $heap->{Umode} ) );
     }
 
     my ($plugman) = $irc->plugin_get( 'PlugMan' );
