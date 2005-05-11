@@ -89,6 +89,10 @@ sub _default {
   return PCI_EAT_NONE;
 }
 
+sub lag {
+  return $_[0]->{lag};
+}
+
 sub _start {
   my ($kernel,$self) = @_[KERNEL,OBJECT];
 
