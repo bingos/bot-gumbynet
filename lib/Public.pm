@@ -5,6 +5,7 @@ use Date::Format;
 use LWP::UserAgent;
 use XML::RSS;
 use HTTP::Request::Common qw(GET);
+use Time::Duration;
 
 our $VERSION = '0.199';
 our $MAXDATA = 498;
@@ -150,32 +151,7 @@ sub _fmeat {
 
 sub timestring {
       my ($timeval) = shift || return 0;
-      my $uptime = time() - $timeval;
-
-      my $days = int $uptime / 86400;
-      my $remain = $uptime % 86400;
-      my $hours = int $remain / 3600;
-      $remain %= 3600;
-      my $mins = int $remain / 60;
-      $remain %= 60;
-
-      my $string = "";
-      if ($days > 0) {
-        $string .= "$days day(s) ";
-      }
-      if ($hours > 0) {
-        $string .= "$hours hour(s) ";
-      }
-      if ($mins > 0) {
-        $string .= "$mins minute(s) ";
-      }
-      if ($remain > 0) {
-        $string .= "$remain second(s)";
-      }
-      if ($string ne "") {
-        return $string;
-      }
-      return 0;
+      return duration_exact( time() - $timeval );
 }
 
 sub u_irc {
