@@ -69,12 +69,12 @@ sub handle_feed {
      # do stuff with the XML::RSS::Headline object
      SWITCH: {
        if ( $feed->name eq 'cpan-testers' and $headline->headline =~ /^CPAN UPLOAD: (.+?) /i ) {
-	     last SWITCH;
 	     my (@upload) = split(/\//,$1);
 	     my ($author) = $upload[$#upload-1];
 	     my ($module) = $upload[$#upload];
 	     $module =~ s/\.tar\.gz//;
-	     $irc->yield( ctcp => $channel => "ACTION CPAN Upload: $module by $author" ) if ( $irc->connected() and $module =~ /^(POE-|Bot-)/i );
+	     $irc->yield( ctcp => $channel => "ACTION CPAN Upload: $module by $author" ) if ( $irc->connected() and $module =~ /^(Bot-|ThreatNET-)/i );
+	     $irc->yield( ctcp => $channel => "ACTION CPAN Upload: $module by $author" ) if ( $irc->connected() and $module =~ /^(POE-)/i and not $irc->is_channel_member('#PoE','CPAN') );
 	     last SWITCH;
        }
        if ( $feed->name eq 'cpan-testers' and $headline->headline =~ /^(PASS|FAIL) POE-.*$/i ) {
@@ -82,7 +82,11 @@ sub handle_feed {
 	     last SWITCH;
        }
        if ( $feed->name eq 'poe-commits' ) {
-	     $irc->yield( ctcp => $channel => "ACTION POE Commit: " . $headline->headline) if ( $irc->connected() );
+	     my ($committer) = '?';
+	     if ( $headline->description =~ /Commit by <strong>(.+?)<\/strong>/i ) {
+		$committer = $1;
+	     }
+	     $irc->yield( ctcp => $channel => "ACTION POE Commit : '" . $headline->headline . "' by $committer" ) if ( $irc->connected() );
 	     last SWITCH;
        }
        if ( $feed->name eq 'poe-list' ) {
