@@ -77,7 +77,7 @@ sub handle_feed {
 	     $irc->yield( ctcp => $channel => "ACTION CPAN Upload: $module by $author" ) if ( $irc->connected() and $module =~ /^(POE-)/i and not $irc->is_channel_member('#PoE','CPAN') );
 	     last SWITCH;
        }
-       if ( $feed->name eq 'cpan-testers' and $headline->headline =~ /^(PASS|FAIL) POE-.*$/i ) {
+       if ( $feed->name eq 'cpan-testers' and $headline->headline =~ /^FAIL POE-.*$/i ) {
 	     $irc->yield( ctcp => $channel => "ACTION CPAN Testers: " . $headline->headline) if ( $irc->connected() );
 	     last SWITCH;
        }
