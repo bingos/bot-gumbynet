@@ -201,6 +201,7 @@ sub load {
   my ($loaded) = 0;
 
   $plugin .= '.pm' unless ( $plugin =~ /\.pm$/ );
+  $plugin =~ s/::/\//g;
 
   eval { 
 	require $plugin;
@@ -209,9 +210,10 @@ sub load {
 
   return 0 unless ( $loaded );
 
-  my ($module) = $plugin;
-
   $plugin =~ s/\.pm$//;
+  $plugin =~ s/\//::/g;
+
+  my ($module) = $plugin;
 
   my ($object) = $plugin->new( @_ );
 
