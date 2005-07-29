@@ -1,4 +1,4 @@
-#!/usr/bin/perl -w
+#!/usr/local/bin/perl -w
 
 use POE qw(Component::IRC::State Component::EasyDBI);
 use Getopt::Long;

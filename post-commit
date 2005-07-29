@@ -1,0 +1,131 @@
+#!/usr/bin/perl -w
+
+use POE qw(Filter::Line Filter::Stream Wheel::SocketFactory Wheel::ReadWrite Wheel::Run);
+use Carp;
+
+my ($server) = 'localhost';
+my ($port) = 9090;
+my ($svnlook) = '/usr/local/bin/svnlook';
+
+my ($repos) = $ARGV[0] || die;
+my ($rev) = $ARGV[1] || die;
+
+my ($channel) = '#PoE';
+my ($friendly) = 'PoCo-IRC';
+
+POE::Session->create(
+        inline_states => { _start => \&start_client,
+                         },
+	package_states => [
+		'main' => [
+			qw(_child_error _child_closed _child_stdout _child_stderr _connect _sock_down _sock_flushed _sock_up _sock_err)
+		],
+	],
+	options => { trace => 0 },
+);
+
+$poe_kernel->run();
+exit 0;
+
+sub start_client {
+  my ($kernel,$heap) = @_[KERNEL,HEAP];
+
+  $heap->{wheel} = POE::Wheel::Run->new(
+	Program => $svnlook,
+	ProgramArgs => [ 'info', $repos, '-r', $rev ],
+	ErrorEvent => '_child_error',
+	CloseEvent  => '_child_closed',     # Child closed all output.
+	StdoutEvent => '_child_stdout', # Event to emit with child stdout information.
+	StderrEvent => '_child_stderr', # Event to emit with child stderr information.
+	StdioFilter => POE::Filter::Line->new(),    # Or some other filter.
+  );
+  undef;
+}
+
+sub _child_error {
+  my ($kernel,$heap) = @_[KERNEL,HEAP];
+
+  delete ( $heap->{wheel} );
+
+  if ( scalar @{ $heap->{svnlooklines} } == 0 ) {
+	return undef;
+  }
+
+  $author = shift @{ $heap->{svnlooklines} };
+  $date = shift @{ $heap->{svnlooklines} };
+  shift @{ $heap->{svnlooklines} };
+  $logentry = shift @{ $heap->{svnlooklines} };
+  
+  $kernel->yield( '_connect' );
+  undef;
+}
+
+sub _child_closed {
+  my ($kernel,$heap) = @_[KERNEL,HEAP];
+
+  delete ( $heap->{wheel} );
+  undef;
+}
+
+sub _child_stdout {
+  my ($kernel,$heap,$input) = @_[KERNEL,HEAP,ARG0];
+
+  push( @{ $heap->{svnlooklines} }, $input );
+  undef;
+}
+
+sub _child_stderr {
+  my ($kernel,$heap,$input) = @_[KERNEL,HEAP,ARG0];
+
+  warn "$input\n";
+  undef;
+}
+
+sub _connect {
+  my ($kernel,$heap) = @_[KERNEL,HEAP];
+
+  $heap->{sockfactory} = POE::Wheel::SocketFactory->new(
+        SocketProtocol => 'tcp',
+        RemoteAddress => $server,
+        RemotePort => $port,
+        SuccessEvent => '_sock_up',
+        FailureEvent => '_sock_err',
+  );
+
+  undef;
+}
+
+sub _sock_up {
+  my ($kernel, $heap, $session, $socket) = @_[KERNEL, HEAP, SESSION, ARG0];
+
+  delete ( $heap->{sockfactory} );
+
+  $heap->{socket} = new POE::Wheel::ReadWrite
+    ( Handle     => $socket,
+      Driver     => POE::Driver::SysRW->new(),
+      Filter     => POE::Filter::Line->new(),
+      InputEvent => '_parseline',
+      ErrorEvent => '_sock_down',
+      FlushedEvent => '_sock_flushed',
+    );
+
+  if ( $heap->{socket} ) {
+	$heap->{socket}->put("CTCP $channel :ACTION $friendly commit: '$logentry' by $author");
+  }
+  undef;
+}
+
+sub _sock_err {
+  delete ( $_[HEAP]->{sockfactory} );
+  undef;
+}
+
+sub _sock_down {
+  delete ( $_[HEAP]->{socket} );
+  undef;
+}
+
+sub _sock_flushed {
+  delete ( $_[HEAP]->{socket} );
+  undef;
+}

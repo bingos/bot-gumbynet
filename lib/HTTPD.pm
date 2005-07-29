@@ -118,6 +118,7 @@ sub _http_root {
     foreach my $channel ( keys %{ $irc->channels() } ) {
 	my ($fixed) = $channel =~ /^#(.*)$/;
 	$content .= "<table border=1><th><a href=\"/channel?$fixed\">" . $channel . '</a></th>' . "\n";
+	my $server_count = { };
 	foreach my $nick ( sort { lc($a) cmp lc($b) } $irc->channel_list( $channel ) ) {
 	   if ( my $nickref = $irc->nick_info( $nick ) ) {
 		$content .= '<tr><td>' . $nick . '</td><td>' . $nickref->{User} . '@' . $nickref->{Host} . '</td><td>';
@@ -133,8 +134,13 @@ sub _http_root {
 		if ( $nickref->{IRCop} ) {
 			$content .= '*';
 		}
+		$server_count->{ $nickref->{Server} }++;
 		$content .= '</td><td>' . $nickref->{Server} . '</td><td>' . $nickref->{Real} . '</td></tr>';
 	   }
+	}
+	my ($highest) = ( sort { $server_count->{$b} <=> $server_count->{$a} } keys %{ $server_count } )[0];
+	if ( $highest ) {
+		$content .= '<tr><td colspan="5">Highest server count: ' . $highest . '</td></tr>';
 	}
 	$content .= "</table>\n\n";
     }
