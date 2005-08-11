@@ -335,6 +335,8 @@ sub _check {
   my ($who) = $_[1] || return 0;
   my ($mode) = $_[2] || return 0;
 
+  return 1 if ( $self->_bot_owner( $who ) );
+
   unless ( defined ( $self->{TRUSTS}->{ $channel } ) ) {
 	return 0;
   }
@@ -662,6 +664,41 @@ sub _build_modes {
     return @modes;
 }
 
+sub _bot_owner {
+  my ($self) = shift;
+  my ($who) = $_[0] || return 0;
+  my ($nick,$userhost);
+
+  unless ( $self->{botowner} ) {
+        return 0;
+  }
+
+  if ( $who =~ /!/ ) {
+        ($nick,$userhost) = ( split /!/, $who )[0..1];
+  } else {
+        ($nick,$userhost) = ( split /!/, $self->{irc}->nick_long_form($who) )[0..1];
+  }
+
+  unless ( $nick and $userhost ) {
+        return 0;
+  }
+
+  $who = l_irc ( $nick ) . '!' . l_irc ( $userhost );
+
+  if ( $self->{botowner} =~ /[\x2A\x3F]/ ) {
+        my ($owner) = l_irc ( $self->{botowner} );
+        $owner =~ s/\x2A/[\x01-\xFF]{0,}/g;
+        $owner =~ s/\x3F/[\x01-\xFF]{1,1}/g;
+        if ( $who =~ /$owner/ ) {
+                return 1;
+        }
+  } elsif ( $who eq l_irc ( $self->{botowner} ) ) {
+        return 1;
+  }
+
+  return 0;
+}
+
 ###########################
 # Miscellaneous functions #
 ###########################
@@ -670,6 +707,13 @@ sub u_irc {
   my ($value) = shift || return undef;
 
   $value =~ tr/a-z{}|/A-Z[]\\/;
+  return $value;
+}
+
+sub l_irc {
+  my ($value) = shift || return undef;
+
+  $value =~ tr/A-Z[]\\/a-z{}|/;
   return $value;
 }
 
