@@ -1,2 +1,2 @@
 use lib '.';
-use CPANBot;
+use Shorten;

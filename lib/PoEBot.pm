@@ -1,4 +1,4 @@
-package CPANBot;
+package PoEBot;
 
 use strict;
 use warnings;
@@ -12,7 +12,7 @@ use Data::Dumper;
 sub new {
   my ($package) = shift;
 
-  POE::Component::Client::NNTP->spawn ( 'NNTP-Client', { NNTPServer => 'nntp.perl.org' } );
+  POE::Component::Client::NNTP->spawn ( 'NNTP-Client2', { NNTPServer => 'nntp.perl.org' } );
 
   my $self = bless { @_ }, $package;
 
@@ -91,7 +91,7 @@ sub shutdown {
   my ($kernel,$self) = @_[KERNEL,OBJECT];
 
   $kernel->refcount_decrement( $self->{session_id} => __PACKAGE__ );
-  $kernel->call( 'NNTP-Client' => 'shutdown' );
+  $kernel->call( 'NNTP-Client2' => 'shutdown' );
   $kernel->delay( poll => undef );
   $kernel->delay( _connect => undef );
   $self->{shutdown} = 1;
@@ -104,14 +104,14 @@ sub _start {
   $self->{session_id} = $_[SESSION]->ID();
   $kernel->refcount_increment( $self->{session_id} => __PACKAGE__ );
 
-  $kernel->post ( 'NNTP-Client' => register => 'all' );
+  $kernel->post ( 'NNTP-Client2' => register => 'all' );
   $kernel->yield( '_connect' );
   undef;
 }
 
 sub _connect {
   my ($kernel,$self) = @_[KERNEL,OBJECT];
-  $kernel->post ( 'NNTP-Client' => 'connect' );
+  $kernel->post ( 'NNTP-Client2' => 'connect' );
   undef;
 }
 
@@ -119,7 +119,7 @@ sub poll {
   my ($kernel,$self) = @_[KERNEL,OBJECT];
 
   foreach my $group ( @{ $self->{groups} } ) {
-    $kernel->post ( 'NNTP-Client' => group => $group );
+    $kernel->post ( 'NNTP-Client2' => group => $group );
   }
   undef;
 }
@@ -139,7 +139,7 @@ sub nntp_211 {
 	# Check for new articles
 	if ( $estimate >= $self->{articles}->{ $group } ) {
 	   for my $article ( $self->{articles}->{ $group } .. $estimate ) {
-		$kernel->post ( 'NNTP-Client' => head => $article );
+		$kernel->post ( 'NNTP-Client2' => head => $article );
 	   }
 	   $self->{articles}->{ $group } = $estimate + 1;
 	}
