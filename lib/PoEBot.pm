@@ -211,7 +211,7 @@ sub _handle_article {
   	}
   }
   if ( $group eq 'perl.poe' ) {
-	$self->{irc}->yield( ctcp => '#PoE' => "ACTION perl.poe: $subject $from" );
+	$self->{irc}->yield( ctcp => '#PoE' => "ACTION perl.poe: \'$subject\' $from" );
 	return;
   }
   undef;
