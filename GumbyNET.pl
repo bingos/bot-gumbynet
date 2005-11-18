@@ -140,7 +140,7 @@ sub irc_plugin_add {
     $plugin->load( 'Console', 'Console', bindport => $heap->{console} );
     $plugin->load( 'Bouncer', 'Bouncer', bindport => $heap->{bouncer}, botowner => $heap->{owner} );
     #$plugin->load( 'HTTPD', 'HTTPD', bindport => $heap->{httpd} );
-    $plugin->load( 'Shorten', 'Shorten', ignored_nicks => [ qw(purl nopaste workbench shorten chansen) ] );
+    #$plugin->load( 'Shorten', 'Shorten', ignored_nicks => [ qw(purl nopaste workbench shorten chansen) ] );
   } else {
     print STDERR "PlugMan loaded '$desc'\n";
   }
