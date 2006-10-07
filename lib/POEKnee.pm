@@ -19,7 +19,7 @@ sub PCI_register {
   $irc->plugin_register( $self, 'SERVER', qw(public) );
   $self->{session_id} = POE::Session->create(
 	object_states => [ 
-	   $self => [ qw(_shutdown _start _race_on _run) ],
+	   $self => [ qw(_shutdown _start _race_on _run _results) ],
 	],
   )->ID();
   return 1;
@@ -68,33 +68,54 @@ sub _race_on {
   my ($kernel,$self,$channel) = @_[KERNEL,OBJECT,ARG0];
   $self->{_race_in_progress} = 1;
   $self->{_distance} = 5;
+  $self->{_progress} = [ ];
   my $irc = $self->{irc};
   my @channel_list = $irc->channel_list($channel);
   srand( time() * scalar @channel_list );
   my $seed = 5;
+  my $start = 'POE::Knee Race is on! ' . scalar @channel_list . ' ponies over ' . $self->{_distance} . ' stages.';
+  push @{ $self->{_progress} }, $start;
+  $irc->yield('privmsg', $channel, $start );
   foreach my $nick ( @channel_list ) {
      #my $nick_modes = $irc->nick_channel_modes($channel,$nick);
      #$seed += rand(3) if $nick_modes =~ /o/;
      #$seed += rand(2) if $nick_modes =~ /h/;
      #$seed += rand(1) if $nick_modes =~ /v/;
+     push @{ $self->{_progress} }, join(' ', $nick, "($seed)", "is off!");
      $kernel->delay_add( '_run', rand($seed), $nick, $channel, $seed, 1 );
   }
-  $irc->yield('privmsg', $channel, 'POE::Knee Race is on! ' . scalar @channel_list . ' ponies over ' . $self->{_distance} . ' stages.' );
   undef;
 }
 
 sub _run {
   my ($kernel,$self,$nick,$channel,$seed,$stage) = @_[KERNEL,OBJECT,ARG0..ARG3];
-  $stage++;
-  #$self->{irc}->yield( 'privmsg', $channel, "$nick reached stage " . ++$stage );
+  #$stage++;
+  push @{ $self->{_progress} }, "$nick reached stage " . ++$stage;
   if ( $stage > $self->{_distance} ) {
 	# Stop the race
 	$kernel->alarm_remove_all();
-	$self->{irc}->yield( 'privmsg', $channel, "$nick! Won the POE::Knee race!" );
+	my $result = "$nick! Won the POE::Knee race!";
+	$self->{irc}->yield( 'privmsg', $channel, $result );
+	push @{ $self->{_progress} }, $result;
+	my $race_result = delete $self->{_progress};
+	$kernel->yield('_results',$race_result);
   	$self->{_race_in_progress} = 0;
 	return;
   }
+  if ( $stage > $self->{_race_in_progress} ) {
+	$self->{irc}->yield( 'privmsg', $channel, "$nick! is in the lead at stage $stage" );
+	$self->{_race_in_progress}++;
+  }
   srand( time() );
   $kernel->delay_add( '_run', rand($seed), $nick, $channel, $seed, $stage );
+  undef;
+}
+
+sub _results {
+  my ($kernel,$results) = @_[KERNEL,ARG0];
+  my $time = time();
+  open my $fh, ">", "/home/poe/gumbynet/output/poeknee_$time" or die "$!\n";
+  print $fh "$_\n" for @{ $results };
+  close $fh;
   undef;
 }
