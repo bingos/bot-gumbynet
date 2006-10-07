@@ -2,6 +2,7 @@ package Console;
 
 use POE qw(Wheel::SocketFactory Wheel::ReadWrite Filter::IRCD Filter::Line Filter::Stackable);
 use POE::Component::IRC::Plugin qw( :ALL );
+use Data::Dumper;
 
 sub new {
   my ($package) = shift;
@@ -30,7 +31,7 @@ sub PCI_register {
 sub PCI_unregister {
   my ($self,$irc) = splice @_, 0, 2;
 
-  delete ( $self->{irc} );
+  delete $self->{irc};
 
   $poe_kernel->post( $self->{SESSION_ID} => '_shutdown' );
   $poe_kernel->refcount_decrement( $self->{SESSION_ID}, __PACKAGE__ );
@@ -40,9 +41,11 @@ sub PCI_unregister {
 
 sub _default {
   my ($self,$irc) = splice @_, 0, 2;
-  my ($event) = shift;
-  my (@args) = map { $$_ } @_;
-  my (@output) = ( "$event: " );
+  my $event = shift;
+  return PCI_EAT_NONE if $event eq 'S_raw';
+  pop @_ if ref $_[$#_] eq 'ARRAY';
+  my @args = map { $$_ } @_;
+  my @output = ( "$event: " );
 
   foreach my $arg ( @args ) {
         if ( ref($arg) eq 'ARRAY' ) {

@@ -50,6 +50,7 @@ sub S_public {
 	return PCI_EAT_NONE unless ( $uri );
 	return PCI_EAT_NONE if ( $uri->host =~ /^xrl.us$/i );
 	return PCI_EAT_NONE if ( ( $uri->path_query eq "" or $uri->path_query eq '/' ) and $uri->host < 21 );
+	my ($pos) = index($what,'http://');
 	if ( length ( $uri->opaque ) > 25 ) {
 	   $poe_kernel->post( $self->{session_id} => _shorten => { url => $url, event => '_shortened', _nick => $nick, _channel => $channel } );
 	}

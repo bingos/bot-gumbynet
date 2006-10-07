@@ -12,7 +12,7 @@ our $MAXDATA = 498;
 
 # REGEXES
 our $punc_rx = qr([?.!]?);
-our $messages = qr/^(version|uptime|time|stats|clock|slashdot|rootprompt|elreg|fmeat)$punc_rx\s*$/;
+our $messages = qr/^(network|version|uptime|time|stats|clock|slashdot|rootprompt|elreg|fmeat)$punc_rx\s*$/;
 
 sub new {
   my ($package) = shift;
@@ -63,6 +63,15 @@ sub S_public {
   }
 
   return PCI_EAT_NONE;
+}
+
+sub _network {
+  my ($self,$channel,$nick) = splice @_, 0, 3;
+  my $network = $self->{irc}->isupport('NETWORK');
+  if ( $network ) {
+	$self->{irc}->yield( ctcp => $channel => "ACTION is on \'$network\' apparently." );
+  }
+  return 1;
 }
 
 sub _version {
