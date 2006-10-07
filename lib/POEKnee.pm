@@ -103,7 +103,7 @@ sub _run {
 	return;
   }
   if ( $stage > $self->{_race_in_progress} ) {
-	$self->{irc}->yield( 'privmsg', $channel, "$nick! is in the lead at stage $stage" );
+	$self->{irc}->yield( 'privmsg', $channel, "$nick! leads at stage $stage" );
 	$self->{_race_in_progress}++;
   }
   srand( time() );
