@@ -136,7 +136,7 @@ sub irc_plugin_add {
 
   if ( $desc eq 'PlugMan' ) {
     print STDERR "Loaded 'PlugMan' plugin\nLoading other plugins\n";
-    $plugin->load( 'Connector', 'POE::Component::IRC::Plugin::Connector', delay => 150 );
+    $plugin->load( 'Connector', 'POE::Component::IRC::Plugin::Connector', delay => 100 );
     $plugin->load( 'Trust2', 'Trust2', dbi => 'dbi', botnick => $heap->{NickName}, botowner => $heap->{owner} );
     $plugin->load( 'Logger', 'Logger', dbi => 'dbi', session => $_[SESSION]->ID(), botnick => $heap->{NickName} );
     $plugin->load( 'Debug', 'Debug', file => './output/' . $heap->{NickName} . '.debug' );

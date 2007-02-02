@@ -115,6 +115,7 @@ sub S_chan_mode {
   my ($self,$irc) = splice @_, 0 , 2;
   my $mapping = $irc->isupport('CASEMAPPING');
   my ($nick,$userhost) = ( split /!/, ${ $_[0] } )[0..1];
+  return PCI_EAT_NONE if $nick =~ /\./;
   my $channel = ${ $_[1] };
   my $mode = ${ $_[2] };
   my $args = ${ $_[3] };

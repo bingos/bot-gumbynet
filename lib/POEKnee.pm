@@ -2,6 +2,8 @@ package POEKnee;
 
 use strict;
 use warnings;
+use Time::HiRes qw(gettimeofday);
+use Math::Random;
 use POE;
 use POE::Component::IRC::Plugin qw(:ALL);
 use POE::Component::IRC::Common qw(:ALL);
@@ -38,13 +40,16 @@ sub S_public {
   my $channel = ${ $_[1] }->[0];
   my $what = ${ $_[2] };
   my $mapping = $irc->isupport('CASEMAPPING');
-  return PCI_EAT_NONE unless u_irc( $channel, $mapping ) eq '#POE';
+  #return PCI_EAT_NONE unless u_irc( $channel, $mapping ) eq '#POE';
   my $mynick = $irc->nick_name();
   my ($command) = $what =~ m/^\s*\Q$mynick\E[\:\,\;\.]?\s*(.*)$/i;
   return PCI_EAT_NONE unless $command;
   my @cmd = split /\s+/, $command;
   return PCI_EAT_NONE unless uc( $cmd[0] ) eq 'POEKNEE';
-  return PCI_EAT_NONE if $self->{_race_in_progress};
+  if ( $self->{_race_in_progress} ) {
+	$irc->yield( privmsg => $channel => "There is already a race in progress" );
+	return PCI_EAT_NONE;
+  }
   $poe_kernel->post( $self->{session_id}, '_race_on', $channel );
   return PCI_EAT_NONE;
 }
@@ -71,18 +76,19 @@ sub _race_on {
   $self->{_progress} = [ ];
   my $irc = $self->{irc};
   my @channel_list = $irc->channel_list($channel);
-  srand( time() * scalar @channel_list );
+  #srand( time() * scalar @channel_list );
   my $seed = 5;
   my $start = 'POE::Knee Race is on! ' . scalar @channel_list . ' ponies over ' . $self->{_distance} . ' stages.';
-  push @{ $self->{_progress} }, $start;
-  $irc->yield('privmsg', $channel, $start );
+  push @{ $self->{_progress} }, join(' ', _stamp(), $start);
+  $irc->yield('ctcp', $channel, 'ACTION ' . $start );
   foreach my $nick ( @channel_list ) {
      #my $nick_modes = $irc->nick_channel_modes($channel,$nick);
      #$seed += rand(3) if $nick_modes =~ /o/;
      #$seed += rand(2) if $nick_modes =~ /h/;
      #$seed += rand(1) if $nick_modes =~ /v/;
-     push @{ $self->{_progress} }, join(' ', $nick, "($seed)", "is off!");
-     $kernel->delay_add( '_run', rand($seed), $nick, $channel, $seed, 1 );
+     my $delay = random_uniform(1,0,$seed);
+     push @{ $self->{_progress} }, join(' ', _stamp(), $nick, "($delay)", "is off!");
+     $kernel->delay_add( '_run', $delay, $nick, $channel, $seed, 1 );
   }
   undef;
 }
@@ -90,24 +96,24 @@ sub _race_on {
 sub _run {
   my ($kernel,$self,$nick,$channel,$seed,$stage) = @_[KERNEL,OBJECT,ARG0..ARG3];
   #$stage++;
-  push @{ $self->{_progress} }, "$nick reached stage " . ++$stage;
+  push @{ $self->{_progress} }, _stamp() . " $nick reached stage " . ++$stage;
   if ( $stage > $self->{_distance} ) {
 	# Stop the race
 	$kernel->alarm_remove_all();
 	my $result = "$nick! Won the POE::Knee race!";
 	$self->{irc}->yield( 'privmsg', $channel, $result );
-	push @{ $self->{_progress} }, $result;
+	push @{ $self->{_progress} }, _stamp() . " " . $result;
 	my $race_result = delete $self->{_progress};
 	$kernel->yield('_results',$race_result);
   	$self->{_race_in_progress} = 0;
 	return;
   }
   if ( $stage > $self->{_race_in_progress} ) {
-	$self->{irc}->yield( 'privmsg', $channel, "$nick! leads at stage $stage" );
+	$self->{irc}->yield( 'ctcp', $channel, "ACTION $nick! leads at stage $stage" );
 	$self->{_race_in_progress}++;
   }
-  srand( time() );
-  $kernel->delay_add( '_run', rand($seed), $nick, $channel, $seed, $stage );
+  #srand( time() );
+  $kernel->delay_add( '_run', random_uniform(1,0,$seed), $nick, $channel, $seed, $stage );
   undef;
 }
 
@@ -118,4 +124,8 @@ sub _results {
   print $fh "$_\n" for @{ $results };
   close $fh;
   undef;
+}
+
+sub _stamp { 
+  return join('.', gettimeofday);
 }
