@@ -115,7 +115,7 @@ sub _time {
 
 sub _clock {
   my ($self,$channel,$nick) = splice @_, 0, 3;
-  my ($return) = get_headlines('http://newbabe.pobox.com/~rspier/cgi-bin/clock.cgi');
+  my ($return) = get_headlines('http://rjbs.manxome.org/rss/clock.cgi');
 
   $MAXDATA = 498 - length( $channel ) - length( $nick );
   $self->{irc}->yield( privmsg => $channel => "$nick: $return" );

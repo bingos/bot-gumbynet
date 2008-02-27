@@ -271,6 +271,9 @@ sub _check_access {
 	  $mode = $rmode;
 	}
 	last SWITCH unless $mode;
+	last SWITCH if $mode eq 'v' and $self->{irc}->has_channel_voice( $data->{_chan}, $data->{_nick} );
+	last SWITCH if $mode eq 'h' and $self->{irc}->is_channel_halfop( $data->{_chan}, $data->{_nick} );
+	last SWITCH if $mode eq 'o' and $self->{irc}->is_channel_operator( $data->{_chan}, $data->{_nick} );
 	$self->{irc}->yield( mode => $data->{_chan} => "+$mode" => $data->{_nick} );
 	last SWITCH;
     }
@@ -302,6 +305,7 @@ sub _check_access {
 	  }
 	  last SWITCH;
 	}
+	last SWITCH unless $mode;
 	# Okay dude is trusted.
 	my ($nick,$userhost) = split /!/, $self->{irc}->nick_long_form( $data->{_args} );
 	my $query = join '!', u_irc( $nick, $mapping ), $self->_sanitise_userhost( $userhost );
@@ -488,7 +492,9 @@ sub _build_modes {
     return unless $self->{irc}->is_channel_operator( $channel, $self->{irc}->nick_name() );
     my @modes = ();
 
-    while (my @subset = splice(@nicks,0,4)) {
+    my $max_modes = $self->{irc}->isupport('MODES') || 4;
+
+    while (my @subset = splice(@nicks,0,$max_modes)) {
         push @modes, $channel . ' ' .  $give_take . $mode x @subset . " " . join ' ', @subset;
     }
     return @modes;

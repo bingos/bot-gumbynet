@@ -1,5 +1,6 @@
 #!/usr/local/bin/perl -w
 
+use Event;
 use POE qw(Component::IRC::State Component::EasyDBI);
 use POE::Component::IRC::Plugin::PlugMan;
 use Getopt::Long;
@@ -72,7 +73,7 @@ unless ( $dsn and $user and $pass ) {
   die "You must specify DSN, USER and PASS in the config file\n";
 }
 
-my $irc = POE::Component::IRC::State->spawn( debug => 0, options => { trace => 0 } );
+my $irc = POE::Component::IRC::State->spawn( debug => 0, options => { trace => 0 }, AwayPoll => 0 );
 
 POE::Component::EasyDBI->new(
 	alias => 'dbi',
