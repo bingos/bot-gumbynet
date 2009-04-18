@@ -1,28 +1,26 @@
-#!/usr/local/bin/perl -w
+#!/home/bingos/perl5.10.0/bin/perl
 
-use Event;
+use strict;
+use warnings;
+BEGIN { eval "use Event;"; }
 use POE qw(Component::IRC::State Component::EasyDBI);
 use POE::Component::IRC::Plugin::PlugMan;
 use Getopt::Long;
-use IO::Handle;
 use vars qw($VERSION);
 
 $VERSION = '0.9';
 
-autoflush STDOUT 1;
-autoflush STDERR 1;
+my ($usage) = "Usage: $0 [option]\n\n--nick <nickname>\n--moduledir <pathtodir>\n--config <configfile>\n";
 
-my $usage = "Usage: $0 [option]\n\n--nick <nickname>\n--moduledir <pathtodir>\n--config <configfile>\n";
-
-my $nickname;
-my $config = 'GumbyNET.cfg';
-my $dsn;
-my $user;
-my $pass;
-my $mdir;
-my $owner;
-my $console = 9090;
-my $bouncer = 9091;
+my ($nickname);
+my ($config) = 'GumbyNET.cfg';
+my ($dsn);
+my ($user);
+my ($pass);
+my ($mdir);
+my ($owner);
+my ($console) = 9090;
+my ($bouncer) = 9091;
 
 GetOptions( 
 	"nick=s" => \$nickname,
@@ -46,9 +44,6 @@ unless ( $mdir ) {
   $mdir = './lib';
 }
 push( @INC, $mdir );
-#eval {
-#  require "PlugMan.pm";
-#};
 if ( $@ ) {
   print "$@\n";
   die;
@@ -73,7 +68,7 @@ unless ( $dsn and $user and $pass ) {
   die "You must specify DSN, USER and PASS in the config file\n";
 }
 
-my $irc = POE::Component::IRC::State->spawn( debug => 0, options => { trace => 0 }, AwayPoll => 0 );
+my ($irc) = POE::Component::IRC::State->spawn( AwayPoll => 0 );
 
 POE::Component::EasyDBI->new(
 	alias => 'dbi',
@@ -93,7 +88,7 @@ POE::Session->create(
 	},
 	package_states => [
 	  'main' => [ qw(irc_plugin_add irc_001 irc_433 bot_got_config bot_got_channels
-		      bot_get_back_nick irc_isupport) ],
+		      bot_get_back_nick) ],
 	],
 	options => { trace => 0 },
 
@@ -137,15 +132,16 @@ sub irc_plugin_add {
 
   if ( $desc eq 'PlugMan' ) {
     print STDERR "Loaded 'PlugMan' plugin\nLoading other plugins\n";
-    $plugin->load( 'Connector', 'POE::Component::IRC::Plugin::Connector', delay => 100 );
+    $plugin->load( 'Connector', 'POE::Component::IRC::Plugin::Connector' );
     $plugin->load( 'Trust2', 'Trust2', dbi => 'dbi', botnick => $heap->{NickName}, botowner => $heap->{owner} );
     $plugin->load( 'Logger', 'Logger', dbi => 'dbi', session => $_[SESSION]->ID(), botnick => $heap->{NickName} );
     $plugin->load( 'Debug', 'Debug', file => './output/' . $heap->{NickName} . '.debug' );
     $plugin->load( 'CTCP', 'CTCP', botver => $heap->{botver}, info => $heap->{NickName} );
-    $plugin->load( 'DNS', 'DNS' );
-    $plugin->load( 'CoreList', 'CoreList' );
+    $plugin->load( 'DNS', 'POE::Component::IRC::Plugin::QueryDNS' );
+    $plugin->load( 'CoreList', 'POE::Component::IRC::Plugin::CoreList', 'command', 'core' );
     $plugin->load( 'Console', 'Console', bindport => $heap->{console} );
     $plugin->load( 'Bouncer', 'Bouncer', bindport => $heap->{bouncer}, botowner => $heap->{owner} );
+    $plugin->load( 'RSS', 'RSS' );
     #$plugin->load( 'HTTPD', 'HTTPD', bindport => $heap->{httpd} );
     #$plugin->load( 'Shorten', 'Shorten', ignored_nicks => [ qw(purl nopaste workbench shorten chansen) ] );
   } else {
@@ -167,13 +163,6 @@ sub bot_connect {
 			 Raw => 1,
 			);
     $irc->yield( connect => \%parameters );
-}
-
-sub irc_isupport {
-  my ($plugin) = $_[ARG0];
-
-  print STDOUT $plugin->isupport('NETWORK') . "\n";
-  undef;
 }
 
 sub irc_001 {

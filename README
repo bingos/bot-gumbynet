@@ -15,15 +15,12 @@ POE
 POE::Component::IRC 4.4
 Date::Format
 POE::Component::EasyDBI
-DBD::mysql ( or equivalent DBI driver, see caveat below )
 LWP
 CGI
 XML::RSS
-Time::HiRes
-Time::Duration
+Time::HiRes;
 POE::Component::RSSAggregator ( for aggrebot.pl )
-POE::Component::WWW::Shorten ( for lib/Shorten.pm )
-MySQL database ( or equivalent, see caveat below ), for storage.
+MySQL database, for storage.
 
 Installation:
 ============

@@ -12,7 +12,7 @@ our $MAXDATA = 498;
 
 # REGEXES
 our $punc_rx = qr([?.!]?);
-our $messages = qr/^(network|version|uptime|time|stats|clock|slashdot|rootprompt|elreg|fmeat|jerkit)$punc_rx\s*$/;
+our $messages = qr/^(version|uptime|time|stats|clock|slashdot|rootprompt|elreg|fmeat)$punc_rx\s*$/;
 
 sub new {
   my ($package) = shift;
@@ -65,15 +65,6 @@ sub S_public {
   return PCI_EAT_NONE;
 }
 
-sub _network {
-  my ($self,$channel,$nick) = splice @_, 0, 3;
-  my $network = $self->{irc}->isupport('NETWORK');
-  if ( $network ) {
-	$self->{irc}->yield( ctcp => $channel => "ACTION is on \'$network\' apparently." );
-  }
-  return 1;
-}
-
 sub _version {
   my ($self,$channel,$nick) = splice @_, 0, 3;
   my ($reply) = 'ACTION is running ';
@@ -116,15 +107,6 @@ sub _time {
 sub _clock {
   my ($self,$channel,$nick) = splice @_, 0, 3;
   my ($return) = get_headlines('http://rjbs.manxome.org/rss/clock.cgi');
-
-  $MAXDATA = 498 - length( $channel ) - length( $nick );
-  $self->{irc}->yield( privmsg => $channel => "$nick: $return" );
-  return 1;
-}
-
-sub _jerkit {
-  my ($self,$channel,$nick) = splice @_, 0, 3;
-  my ($return) = get_headlines('http://eekeek.org/jerkcity.cgi');
 
   $MAXDATA = 498 - length( $channel ) - length( $nick );
   $self->{irc}->yield( privmsg => $channel => "$nick: $return" );

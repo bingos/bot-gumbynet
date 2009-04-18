@@ -1,7 +1,9 @@
-#!/usr/local/bin/perl -w
+#!/home/bingos/perl5.10.0/bin/perl
 
 use strict;
+use warnings;
 use Carp;
+BEGIN { eval "use Event;"; }
 use POE qw(Component::IRC Component::EasyDBI);
 use lib './lib';
 use Connector;
@@ -9,18 +11,18 @@ use CPANBot;
 use PoEBot;
 use POE::Component::IRC::Plugin::BotAddressed;
 
-my ($nickname) = 'GumbyNET';
-my ($username) = 'cpanbot';
-my ($server) = '127.0.0.1';
-my ($port) = 9091;
-my ($channel) = '#PoE';
-my ($groups) = [ 'perl.cpan.testers', 'perl.poe' ];
+my $nickname = 'GumbyNET2';
+my $username = 'cpanbot';
+my $server = '127.0.0.1';
+my $port = 9091;
+my $channel = '#PoE';
+my $groups = [ 'perl.cpan.testers', 'perl.poe' ];
 
 POE::Component::EasyDBI->new(
         alias => 'dbi',
-        dsn => 'DBI:mysql:PoEBoT:localhost',
-        username => 'poebot',
-        password => 'letmein',
+        dsn => 'DBI:mysql:gumbynet:localhost',
+        username => 'bingos',
+        password => 'gumbyrulez',
 );
 
 my ($irc) = POE::Component::IRC->spawn( debug => 0 );
@@ -45,12 +47,14 @@ sub init_session {
   $irc->plugin_add( 'PoEBot', PoEBot->new( botnick => $nickname, poll => 30, groups => [ $groups->[1] ], dbi => 'dbi' ) );
   warn "Starting connection to $server:$port\n";
   $irc->yield( connect => { Nick => $nickname, Server => $server, Port => $port, Username => $username } );
+  undef;
 }
 
 sub handle_default {
     my ( $event, $args ) = @_[ ARG0 .. $#_ ];
     print "$event: ";
 
+    return 0 if $event eq 'nntp_220';
     foreach (@$args) {
         if ( ref($_) eq 'ARRAY' ) {
             print "[", join ( ", ", @$_ ), "] ";

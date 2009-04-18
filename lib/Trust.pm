@@ -2,7 +2,6 @@ package Trust;
 
 use POE;
 use POE::Component::IRC::Plugin qw( :ALL );
-use Data::Dumper;
 
 # REGEXES
 our $punc_rx = qr([?.!]?);
@@ -87,11 +86,11 @@ sub S_join {
 sub S_nick {
   my ($self,$irc) = splice @_, 0 , 2;
   my ($old,$userhost) = ( split /!/, ${ $_[0] } )[0..1];
-  my $nick = ${ $_[1] };
-  my $who = $nick . '!' . $userhost;
+  my ($nick) = ${ $_[1] };
+  my ($who) = $nick . '!' . $userhost;
 
   foreach my $channel ( @{ $_[2]->[0] } ) {
-    my $mode;
+    my ($mode);
     SWITCH: {
       if ( not $self->trusted_channel( $channel ) ) {
 	last SWITCH;
@@ -121,18 +120,18 @@ sub S_nick {
 sub S_mode {
   my ($self,$irc) = splice @_, 0 , 2;
   my ($nick,$userhost) = ( split /!/, ${ $_[0] } )[0..1];
-  my $channel = ${ $_[1] };
+  my ($channel) = ${ $_[1] };
   return PCI_EAT_NONE unless ( $self->trusted_channel( $channel ) );
-  my $mynick = $irc->nick_name();
+  my ($mynick) = $irc->nick_name();
   return PCI_EAT_NONE if ( u_irc ( $nick ) eq u_irc ( $mynick ) );
   return PCI_EAT_NONE if ( u_irc ( $channel ) eq u_irc ( $mynick ) );
   pop @_;
-  my $parsed_mode = parse_mode_line( map { $$_ } @_[ 2 .. $#_ ] );
+  my ($parsed_mode) = parse_mode_line( map { $$_ } @_[ 2 .. $#_ ] );
 
-  my $trusted_nick = $self->_is_trusted( $channel, ${ $_[0] } );
+  my ($trusted_nick) = $self->_is_trusted( $channel, ${ $_[0] } );
 
-  while ( my $mode = shift @{ $parsed_mode->{modes} } ) {
-    my $arg = shift @{ $parsed_mode->{args} } if $mode =~ /^(\+[hovklbIe]|-[hovbIe])/;
+  while ( my $mode = shift ( @{ $parsed_mode->{modes} } ) ) {
+    my $arg = shift ( @{ $parsed_mode->{args} } ) if ( $mode =~ /^(\+[hovklbIe]|-[hovbIe])/ );
 	SWITCH: {
 	   if ( $trusted_nick and $mode eq '+o' and u_irc ( $arg ) eq u_irc ( $mynick ) ) {
 		$poe_kernel->post( $self->{SESSION_ID}, '_spread_ops', $channel );
@@ -270,7 +269,7 @@ sub _spread_ops {
   my (@nicks);
 
   foreach my $nick ( $self->{irc}->channel_list( $channel ) ) {
-	if ( !$irc->is_channel_operator( $channel, $nick or $irc->is_channel_halfop( $channel, $nick ) or $irc->has_channel_voice( $channel, $nick ) ) ) {
+	if ( not ( $irc->is_channel_operator( $channel, $nick ) or $irc->is_channel_halfop( $channel, $nick ) or $irc->has_channel_voice( $channel, $nick ) ) ) {
 		push ( @nicks, $nick );
 	}
   }
