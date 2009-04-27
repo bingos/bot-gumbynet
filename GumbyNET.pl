@@ -10,17 +10,17 @@ use vars qw($VERSION);
 
 $VERSION = '0.9';
 
-my ($usage) = "Usage: $0 [option]\n\n--nick <nickname>\n--moduledir <pathtodir>\n--config <configfile>\n";
+my $usage = "Usage: $0 [option]\n\n--nick <nickname>\n--moduledir <pathtodir>\n--config <configfile>\n";
 
-my ($nickname);
-my ($config) = 'GumbyNET.cfg';
-my ($dsn);
-my ($user);
-my ($pass);
-my ($mdir);
-my ($owner);
-my ($console) = 9090;
-my ($bouncer) = 9091;
+my $nickname;
+my $config = 'GumbyNET.cfg';
+my $dsn;
+my $user;
+my $pass;
+my $mdir;
+my $owner;
+my $console = 9090;
+my $bouncer = 9091;
 
 GetOptions( 
 	"nick=s" => \$nickname,
