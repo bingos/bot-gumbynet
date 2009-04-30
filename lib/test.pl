@@ -1,2 +1,2 @@
 use lib '.';
-use Acronym;
+use GitHub;
