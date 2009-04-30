@@ -85,10 +85,10 @@ sub _http_handler {
   my $info    = JSON::XS->new->latin1->decode ( $p->param('payload') );
   my $channel = $info->{repository}{name};
   for my $commit (@{ $info->{commits} || [] }) {
-      my ($ref) = $info->{ref} =~ m!/(.+)$!;
+      my ($ref) = $info->{ref} =~ m!/([^/]+)$!;
       my $sha1 = 'SHA1-' . substr $commit->{id}, 0, 7;
       $self->{irc}->yield( 'privmsg', '#IRC.pm', 
-	BOLD . "$channel: " . NORMAL . DARK_GREEN . $commit->{author}{name} . ' ' . BROWN . $ref . ' ' . NORMAL . BOLD . $sha1 . NORMAL );
+	BOLD . "$channel: " . NORMAL . DARK_GREEN . $commit->{author}{name} . ' ' . ORANGE . $ref . ' ' . NORMAL . BOLD . $sha1 . NORMAL );
       $self->{irc}->yield( 'privmsg', '#IRC.pm', 
 	$commit->{message} );
       $self->{irc}->yield( 'privmsg', '#IRC.pm', 
