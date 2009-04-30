@@ -4,6 +4,7 @@ use strict;
 use warnings;
 use POE qw(Component::Server::SimpleHTTP);
 use POE::Component::IRC::Plugin qw( :ALL );
+use POE::Component::IRC::Common qw( :ALL );
 use CGI::Simple;
 use JSON::XS ();
 
@@ -81,11 +82,13 @@ sub _http_handler {
   }
 
   my $p = CGI::Simple->new( $request->content );
-  my $channel = $p->param('name');
   my $info    = JSON::XS->new->latin1->decode ( $p->param('payload') );
+  my $channel = $info->{repository}{name};
   for my $commit (@{ $info->{commits} || [] }) {
+      my ($ref) = $info->{ref} =~ m!/(.+)$!;
+      my $sha1 = 'SHA1-' . substr $commit->{id}, 0, 7;
       $self->{irc}->yield( 'privmsg', '#IRC.pm', 
-	"$channel: " . $commit->{author}{name} . ' ' . $info->{ref} );
+	BOLD . "$channel: " . NORMAL . DARK_GREEN . $commit->{author}{name} . ' ' . BROWN . $ref . ' ' . NORMAL . BOLD . $sha1 . NORMAL );
       $self->{irc}->yield( 'privmsg', '#IRC.pm', 
 	$commit->{message} );
       $self->{irc}->yield( 'privmsg', '#IRC.pm', 
