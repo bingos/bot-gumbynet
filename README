@@ -12,7 +12,7 @@ Requirements:
 
 perl :)
 POE
-POE::Component::IRC 4.4
+POE::Component::IRC 6.06
 Date::Format
 POE::Component::EasyDBI
 LWP
