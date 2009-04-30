@@ -20,6 +20,7 @@ my $user;
 my $pass;
 my $mdir;
 my $owner;
+my $httpd;
 my $console = 9090;
 my $bouncer = 9091;
 
@@ -75,6 +76,7 @@ $pass	 = $Config->{_}->{PASS}    if $Config->{_}->{PASS};
 $owner   = $Config->{_}->{OWNER}   if $Config->{_}->{OWNER};
 $console = $Config->{_}->{CONSOLE} if $Config->{_}->{CONSOLE};
 $bouncer = $Config->{_}->{BOUNCER} if $Config->{_}->{BOUNCER};
+$httpd   = $Config->{_}->{HTTPD}   if $Config->{_}->{HTTPD};
 
 unless ( $dsn and $user and $pass ) {
   die "You must specify DSN, USER and PASS in the config file\n";
@@ -154,7 +156,7 @@ sub irc_plugin_add {
     $plugin->load( 'Console', 'Console', bindport => $heap->{console} );
     $plugin->load( 'Bouncer', 'Bouncer', bindport => $heap->{bouncer}, botowner => $heap->{owner} );
     #$plugin->load( 'RSS', 'RSS' );
-    #$plugin->load( 'HTTPD', 'HTTPD', bindport => $heap->{httpd} );
+    $plugin->load( 'GitHub', 'GitHub', bindport => $httpd ) if $httpd;
     #$plugin->load( 'Shorten', 'Shorten', ignored_nicks => [ qw(purl nopaste workbench shorten chansen) ] );
   } else {
     print STDERR "PlugMan loaded '$desc'\n";
