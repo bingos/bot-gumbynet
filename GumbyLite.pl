@@ -78,7 +78,7 @@ $console = $Config->{_}->{CONSOLE} if $Config->{_}->{CONSOLE};
 $bouncer = $Config->{_}->{BOUNCER} if $Config->{_}->{BOUNCER};
 $httpd   = $Config->{_}->{HTTPD}   if $Config->{_}->{HTTPD};
 
-unless ( $dsn and $user and $pass ) {
+unless ( $dsn ) {
   die "You must specify DSN, USER and PASS in the config file\n";
 }
 
