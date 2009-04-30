@@ -1,4 +1,4 @@
-package HTTPD;
+package GitHub;
 
 use strict;
 use warnings;
