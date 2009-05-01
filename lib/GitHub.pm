@@ -2,7 +2,7 @@ package GitHub;
 
 use strict;
 use warnings;
-use POE qw(Component::Server::SimpleHTTP);
+use POE qw(Component::Server::SimpleHTTP Component::WWW::Shorten);
 use POE::Component::IRC::Plugin qw( :ALL );
 use POE::Component::IRC::Common qw( :ALL );
 use CGI::Simple;
@@ -54,6 +54,8 @@ sub _start {
 
   $self->{SESSION_ID} = $_[SESSION]->ID();
 
+  $self->{shorten} = POE::Component::WWW::Shorten->spawn();
+
   POE::Component::Server::SimpleHTTP->new(
 	ALIAS => 'httpd',
 #	ADDRESS => '192.168.1.252',
@@ -81,19 +83,23 @@ sub _http_handler {
     return;
   }
 
+  my $uri = $request->uri;
+  my $channel = ( $uri->path_segments )[-1];
+  $channel = '#' . $channel;
   my $p = CGI::Simple->new( $request->content );
   my $info    = JSON::XS->new->latin1->decode ( $p->param('payload') );
-  my $channel = $info->{repository}{name};
+  my $repo = $info->{repository}{name};
   for my $commit (@{ $info->{commits} || [] }) {
       my ($ref) = $info->{ref} =~ m!/([^/]+)$!;
       my $sha1 = 'SHA1-' . substr $commit->{id}, 0, 7;
       $self->{irc}->yield( 'privmsg', '#IRC.pm', 
-	BOLD . "$channel: " . NORMAL . DARK_GREEN . $commit->{author}{name} . ' ' . ORANGE . $ref . ' ' . NORMAL . BOLD . $sha1 . NORMAL );
+	BOLD . "$repo: " . NORMAL . DARK_GREEN . $commit->{author}{name} . ' ' . ORANGE . $ref . ' ' . NORMAL . BOLD . $sha1 . NORMAL );
       $self->{irc}->yield( 'privmsg', '#IRC.pm', 
 	$commit->{message} );
       $self->{irc}->yield( 'privmsg', '#IRC.pm', 
 	$commit->{url} );
   }
+  # Dispatch something back to the requester.
   return;
 }
 
