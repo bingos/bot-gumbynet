@@ -15,7 +15,7 @@ sub new {
 
   $self->{SESSION_ID} = POE::Session->create(
 	object_states => [
-	  $self => [ qw(_start _http_handler) ],
+	  $self => [ qw(_start _http_handler _shorten) ],
 	],
 	options => { trace => 0 },
   )->ID();
@@ -35,8 +35,9 @@ sub PCI_register {
 sub PCI_unregister {
   my ($self,$irc) = splice @_, 0, 2;
 
-  delete ( $self->{irc} );
+  delete $self->{irc};
 
+  $self->{shorten}->shutdown();
   $poe_kernel->call( 'httpd' => 'SHUTDOWN' );
   $poe_kernel->refcount_decrement( $self->{SESSION_ID}, __PACKAGE__ );
 
@@ -92,14 +93,26 @@ sub _http_handler {
   for my $commit (@{ $info->{commits} || [] }) {
       my ($ref) = $info->{ref} =~ m!/([^/]+)$!;
       my $sha1 = 'SHA1-' . substr $commit->{id}, 0, 7;
-      $self->{irc}->yield( 'privmsg', '#IRC.pm', 
-	BOLD . "$repo: " . NORMAL . DARK_GREEN . $commit->{author}{name} . ' ' . ORANGE . $ref . ' ' . NORMAL . BOLD . $sha1 . NORMAL );
-      $self->{irc}->yield( 'privmsg', '#IRC.pm', 
-	$commit->{message} );
-      $self->{irc}->yield( 'privmsg', '#IRC.pm', 
-	$commit->{url} );
+      my $foo = { _first => BOLD . "$repo: " . NORMAL . DARK_GREEN . $commit->{author}{name} . ' ' . ORANGE . $ref . ' ' . NORMAL . BOLD . $sha1 . NORMAL,
+	_message => $commit->{message},
+	event => '_shorten',
+	url => $commit->{url},
+	_channel => $channel,
+	_repo => $repo,
+      };
+      $self->{shorten}->shorten( $foo );
   }
   # Dispatch something back to the requester.
+  $response->code( 200 );
+  $kernel->call( 'httpd', 'DONE', $response );
+  return;
+}
+
+sub _shorten {
+  my ($kernel,$self,$data) = @_[KERNEL,OBJECT,ARG0];
+  $data->{_url} = $data->{shorten} || $data->{url};
+  $self->{irc}->yield( 'privmsg', $data->{_channel}, $data->{$_} ) 
+	for qw(_first _message _url);
   return;
 }
 
