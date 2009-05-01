@@ -11,14 +11,16 @@ Requirements:
 ============
 
 perl :)
-POE
+POE 1.005
 POE::Component::IRC 6.06
 Date::Format
 POE::Component::EasyDBI
 LWP
 CGI
+CGI::Simple
 XML::RSS
 Time::HiRes;
+POE::Component::Server::SimpleHTTP
 POE::Component::RSSAggregator ( for aggrebot.pl )
 MySQL database, for storage.
 
