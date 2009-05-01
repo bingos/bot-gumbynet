@@ -20,6 +20,7 @@ CGI
 CGI::Simple
 XML::RSS
 Time::HiRes;
+Acme::POE::Acronym::Generator
 POE::Component::Server::SimpleHTTP
 POE::Component::RSSAggregator ( for aggrebot.pl )
 MySQL database, for storage.
