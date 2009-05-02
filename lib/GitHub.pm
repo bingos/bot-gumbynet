@@ -110,7 +110,7 @@ sub _http_handler {
 
 sub _shorten {
   my ($kernel,$self,$data) = @_[KERNEL,OBJECT,ARG0];
-  $data->{_url} = $data->{shorten} || $data->{url};
+  $data->{_url} = $data->{short} || $data->{url};
   $self->{irc}->yield( 'privmsg', $data->{_channel}, $data->{$_} ) 
 	for qw(_first _message _url);
   return;
