@@ -15,7 +15,7 @@ sub new {
 
   $self->{SESSION_ID} = POE::Session->create(
 	object_states => [
-	  $self => [ qw(_start _http_handler _shorten) ],
+	  $self => [ qw(_start _http_handler _shorten _handle_dbi) ],
 	],
 	options => { trace => 0 },
   )->ID();
@@ -111,8 +111,27 @@ sub _http_handler {
 sub _shorten {
   my ($kernel,$self,$data) = @_[KERNEL,OBJECT,ARG0];
   $data->{_url} = $data->{short} || $data->{url};
-  $self->{irc}->yield( 'privmsg', $data->{_channel}, $data->{$_} ) 
-	for qw(_first _message _url);
+  my $commit = [ map { $data->{$_} } qw(_first _message _url) ];
+  $kernel->post( $self->{dbi} => arrayhash =>
+     {
+        sql => 'SELECT * FROM GitHub where Channel = ? and Repository = ?',
+        event => '_handle_dbi',
+        placeholders => [ $data->{_channel}, $data->{_repo} ],
+	_commit => $commit,
+     },
+  );
+  return;
+}
+
+sub _handle_dbi {
+  my ($kernel,$self,$arg) = @_[KERNEL,OBJECT,ARG0];
+  my $result = $arg->{result};
+  my $error = $arg->{error};
+  my $channel = $arg->{placeholders}->[0];
+  my $commit = $arg->{_commit};
+  return unless !$error and scalar @{ $result };
+  $self->{irc}->yield( 'privmsg', $channel, $_ ) 
+	for @{ $commit };
   return;
 }
 

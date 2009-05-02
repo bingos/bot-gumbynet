@@ -26,3 +26,8 @@ CREATE TABLE Trust (
   Identity varchar(100) default NULL,
   Mode char(1) default NULL
 );
+
+CREATE TABLE GitHub ( 
+  Channel varchar(200) default NULL, 
+  Repository varchar(200) default NULL
+);
