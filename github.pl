@@ -7,16 +7,14 @@ BEGIN { eval "use Event;"; }
 use POE qw(Component::IRC Component::EasyDBI);
 use lib './lib';
 use Connector;
-use CPANBot;
-use PoEBot;
+use GitHub;
 use POE::Component::IRC::Plugin::BotAddressed;
 
-my $nickname = 'GumbyNET2';
-my $username = 'cpanbot';
+my $nickname = 'GumbyNET3';
+my $username = 'github';
 my $server = '127.0.0.1';
+my $httpd = 9999;
 my $port = 9091;
-my $channel = '#PoE';
-my $groups = [ 'perl.cpan.testers', 'perl.poe' ];
 
 POE::Component::EasyDBI->new(
         alias => 'dbi',
@@ -25,7 +23,7 @@ POE::Component::EasyDBI->new(
         password => '**********',
 );
 
-my ($irc) = POE::Component::IRC->spawn( debug => 0 );
+my $irc = POE::Component::IRC->spawn( debug => 0 );
 
 POE::Session->create(
     inline_states => {
@@ -43,8 +41,7 @@ sub init_session {
   $irc->yield( register => 'all' );
   $irc->plugin_add( 'BotAddressed', POE::Component::IRC::Plugin::BotAddressed->new() );
   $irc->plugin_add( 'Connector', Connector->new() );
-  $irc->plugin_add( 'CPANBot', CPANBot->new( botnick => $nickname, poll => 30, groups => [ $groups->[0] ], dbi => 'dbi' ) );
-  $irc->plugin_add( 'PoEBot', PoEBot->new( botnick => $nickname, poll => 30, groups => [ $groups->[1] ], dbi => 'dbi' ) );
+  $irc->plugin_add( 'GitHub', GitHub->new( bindport => $httpd ) );
   warn "Starting connection to $server:$port\n";
   $irc->yield( connect => { Nick => $nickname, Server => $server, Port => $port, Username => $username } );
   undef;
