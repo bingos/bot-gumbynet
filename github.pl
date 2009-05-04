@@ -18,9 +18,9 @@ my $port = 9091;
 
 POE::Component::EasyDBI->new(
         alias => 'dbi',
-        dsn => 'DBI:mysql:gumbynet:localhost',
-        username => '******',
-        password => '**********',
+        dsn => 'dbi:SQLite:dbname=gumbynet.db',
+        username => '',
+        password => '',
 );
 
 my $irc = POE::Component::IRC->spawn( debug => 0 );
