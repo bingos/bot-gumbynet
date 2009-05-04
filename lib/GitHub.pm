@@ -125,11 +125,13 @@ sub _shorten {
 
 sub _handle_dbi {
   my ($kernel,$self,$arg) = @_[KERNEL,OBJECT,ARG0];
+  use Data::Dumper;
+  warn Dumper( $arg );
   my $result = $arg->{result};
   my $error = $arg->{error};
   my $channel = $arg->{placeholders}->[0];
   my $commit = $arg->{_commit};
-  return unless !$error and scalar @{ $result };
+  return unless $result and scalar @{ $result };
   $self->{irc}->yield( 'privmsg', $channel, $_ ) 
 	for @{ $commit };
   return;
