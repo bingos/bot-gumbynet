@@ -41,7 +41,7 @@ sub init_session {
   $irc->yield( register => 'all' );
   $irc->plugin_add( 'BotAddressed', POE::Component::IRC::Plugin::BotAddressed->new() );
   $irc->plugin_add( 'Connector', Connector->new() );
-  $irc->plugin_add( 'GitHub', GitHub->new( bindport => $httpd ) );
+  $irc->plugin_add( 'GitHub', GitHub->new( bindport => $httpd, dbi => 'dbi' ) );
   warn "Starting connection to $server:$port\n";
   $irc->yield( connect => { Nick => $nickname, Server => $server, Port => $port, Username => $username } );
   undef;
