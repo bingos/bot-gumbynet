@@ -156,7 +156,7 @@ sub irc_plugin_add {
     $plugin->load( 'Console', 'Console', bindport => $heap->{console} );
     $plugin->load( 'Bouncer', 'Bouncer', bindport => $heap->{bouncer}, botowner => $heap->{owner} );
     #$plugin->load( 'RSS', 'RSS' );
-    $plugin->load( 'GitHub', 'GitHub', bindport => $httpd ) if $httpd;
+    #$plugin->load( 'GitHub', 'GitHub', bindport => $httpd ) if $httpd;
     #$plugin->load( 'Shorten', 'Shorten', ignored_nicks => [ qw(purl nopaste workbench shorten chansen) ] );
   } else {
     print STDERR "PlugMan loaded '$desc'\n";
