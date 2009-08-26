@@ -88,7 +88,7 @@ sub _http_handler {
   my $channel = ( $uri->path_segments )[-1];
   $channel = '#' . $channel;
   my $p = CGI::Simple->new( $request->content );
-  my $info    = JSON::XS->new->latin1->decode ( $p->param('payload') );
+  my $info    = JSON::XS->new->utf8->decode ( $p->param('payload') );
   my $repo = $info->{repository}{name};
   for my $commit (@{ $info->{commits} || [] }) {
       my ($ref) = $info->{ref} =~ m!/([^/]+)$!;
