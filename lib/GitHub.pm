@@ -84,11 +84,28 @@ sub _http_handler {
     return;
   }
 
+  if ( $request->method ne 'POST' ) {
+    $response->code( 200 );
+    $kernel->call( 'httpd', 'DONE', $response );
+    return;
+  }
+
   my $uri = $request->uri;
   my $channel = ( $uri->path_segments )[-1];
+  unless ( $channel ) {
+    $response->code( 200 );
+    $kernel->call( 'httpd', 'DONE', $response );
+    return;
+  }
   $channel = '#' . $channel;
   my $p = CGI::Simple->new( $request->content );
-  my $info    = JSON::XS->new->utf8->decode ( $p->param('payload') );
+  my $info;
+  eval { $info    = JSON::XS->new->utf8->decode ( $p->param('payload') ); };
+  unless ( $info ) {
+    $response->code( 200 );
+    $kernel->call( 'httpd', 'DONE', $response );
+    return;
+  }
   my $repo = $info->{repository}{name};
   for my $commit (@{ $info->{commits} || [] }) {
       my ($ref) = $info->{ref} =~ m!/([^/]+)$!;
