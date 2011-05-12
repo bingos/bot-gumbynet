@@ -2,7 +2,8 @@
 
 use strict;
 use warnings;
-BEGIN { eval "use Event;"; }
+use if $^O eq 'linux', 'POE::Kernel'=> { loop => 'POE::XS::Loop::EPoll' };
+use if $^O ne 'linux', 'POE::Kernel' => { loop => 'POE::XS::Loop::Poll' };
 use POE qw(Component::IRC::State Component::EasyDBI);
 use POE::Component::IRC::Plugin::PlugMan;
 use Getopt::Long;
@@ -48,6 +49,8 @@ if ( $@ ) {
   print "$@\n";
   die;
 }
+
+warn "Using: ", $poe_kernel->poe_kernel_loop, "\n";
 
 open(CONFIG,"<$config") or die "Problem opening config file $config : $!\n";
 
