@@ -191,7 +191,7 @@ sub _handle_article {
 			event => '_handle_dbi',
 			placeholders => [ $self->{botnick}, 'upload' ],
 			_module => $module,
-			_response => "ACTION CPAN Upload: $module by $author",
+			_response => "ACTION CPAN Upload: $module by $author (http://metacpan.org/release/$author/$module)",
 			_xref => $xref,
 		  },
 		);
